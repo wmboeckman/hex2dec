@@ -1,4 +1,17 @@
-pub fn hex2dec(data: &String) -> u32 {
+use std::fmt;
+
+type Result<T> = std::result::Result<T, InvalidCharError>;
+
+#[derive(Debug, Clone)]
+pub struct InvalidCharError;
+
+impl fmt::Display for InvalidCharError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "invalid character for conversion in provided string")
+    }
+}
+
+pub fn hex2dec(data: &String) -> Result<usize> {
     // 0x0000
     // 0x00000000
     // 0x[n times]
@@ -11,10 +24,10 @@ pub fn hex2dec(data: &String) -> u32 {
     // 0x00ff <-- 255
     // 0x0fff <-- 4095 or (16^3)-1
 
-    let mut pos: u16 = 0; // digit position tracker
-    let mut counter: u32 = 0;
+    let mut pos: u32 = 0; // digit position tracker
+    let mut counter: usize = 0;
 
-    for c in data.chars().rev() {
+    for c in data.to_lowercase().chars().rev() {
         match c {
             // TODO: map 0..f to 0..15 !
 
@@ -34,18 +47,18 @@ pub fn hex2dec(data: &String) -> u32 {
             'd' => {counter += mult_pos(pos) * 13 },
             'e' => {counter += mult_pos(pos) * 14 },
             'f' => {counter += mult_pos(pos) * 15 },
-             _  => {panic!("HOW DID YOU GET HERE");}
+             _  => {return Err(InvalidCharError)}
         }
 
         // println!("{}: {} : {}", c, counter, mult_pos(pos));
 
         pos += 1;
     }
-    return counter;
+    return Ok(counter);
 }
 
-fn mult_pos(p: u16) -> u32 {
-    return u32::pow(16, p as u32);
+fn mult_pos(p: u32) -> usize {
+    return usize::pow(16, p);
 }
 
 pub fn dec2hex(data: &usize) -> String {
