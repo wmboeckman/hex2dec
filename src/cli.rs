@@ -1,21 +1,32 @@
-use crate::math;
+use std::path::PathBuf;
 
-pub fn cli(args: Vec<String>) -> Result<(), &'static str> {
-    
-    if args.len() < 2 {
-        // display help page
-        return Ok(());
-    }
+use clap::{Args, Parser};
 
-    let arg1: &String = &args[1];
 
-    let result = math::hex2dec(arg1);
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+pub struct Cli {
+    #[clap(long, short)]
+    pub debug: bool,
 
-    // for now, just print
-    match result {
-        Ok(n) => println!("{}", n),
-        Err(e) => println!("ERR: {}", e)
-    }
+    #[command(flatten)]
+    pub input: InputChoiceGroup,
 
-    return Ok(());
+    #[clap(long, short, name = "output")]
+    pub output_file: Option<std::path::PathBuf>,
 }
+
+#[derive(Args)]
+#[group(required = true, multiple = false)]
+pub struct InputChoiceGroup {
+    #[arg(name = "input")]
+    pub str: Option<String>,
+
+    #[arg(short('f'), long("file"))]
+    pub path: Option<PathBuf>,
+}
+
+
+pub fn parse_cli() -> Cli {
+    return Cli::parse();
+} 

@@ -71,7 +71,7 @@ The application should keep the business logic separated from the user interface
 
 #### Relevant Rust Libraries:
 
-- ...
+- [clap](https://docs.rs/clap/latest/clap/index.html): a CLI parser for Rust
 
 ## Testing
 
