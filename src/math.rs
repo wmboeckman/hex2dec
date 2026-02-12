@@ -1,28 +1,8 @@
-use std::fmt;
+use crate::err::ConversionErrors;
 
-type Result<T> = std::result::Result<T, InvalidCharError>;
+pub fn hex2dec(data: &String) -> Result<usize, ConversionErrors> {    
 
-#[derive(Debug, Clone)]
-pub struct InvalidCharError;
-
-impl fmt::Display for InvalidCharError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid character for conversion in provided string")
-    }
-}
-
-pub fn hex2dec(data: &String) -> Result<usize> {
-    // 0x0000
-    // 0x00000000
-    // 0x[n times]
-
-    // ...000[0,1,2,3,...,8,9,a,b,c,d,e,f] <-- len? 16!
-    // 0x000f <-- 15
-    // 0x001f <-- 31
-    // 0x002f <-- 47
-    // ...
-    // 0x00ff <-- 255
-    // 0x0fff <-- 4095 or (16^3)-1
+    // TODO: check input for valid base prefix!
 
     let mut pos: u32 = 0; // digit position tracker
     let mut counter: usize = 0;
@@ -47,7 +27,7 @@ pub fn hex2dec(data: &String) -> Result<usize> {
             'd' => {counter += mult_pos(pos) * 13 },
             'e' => {counter += mult_pos(pos) * 14 },
             'f' => {counter += mult_pos(pos) * 15 },
-             _  => {return Err(InvalidCharError)}
+             _  => {return Err(ConversionErrors::InvalidCharError)}
         }
 
         // println!("{}: {} : {}", c, counter, mult_pos(pos));
