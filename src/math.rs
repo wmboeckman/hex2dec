@@ -1,50 +1,56 @@
 use crate::err::ConversionErrors;
 
-pub fn hex2dec(data: &String) -> Result<usize, ConversionErrors> {    
+pub fn hex2dec(data: &String, debug: bool) -> Result<String, ConversionErrors> {    
 
-    // TODO: check input for valid base prefix!
+    let ordered_chars = "0123456789abcdef";
 
     let mut pos: u32 = 0; // digit position tracker
     let mut counter: usize = 0;
 
     for c in data.to_lowercase().chars().rev() {
-        match c {
-            // TODO: map 0..f to 0..15 !
 
-            '0' => {counter += mult_pos(pos) * 0 },
-            '1' => {counter += mult_pos(pos) * 1 },
-            '2' => {counter += mult_pos(pos) * 2 },
-            '3' => {counter += mult_pos(pos) * 3 },
-            '4' => {counter += mult_pos(pos) * 4 },
-            '5' => {counter += mult_pos(pos) * 5 },
-            '6' => {counter += mult_pos(pos) * 6 },
-            '7' => {counter += mult_pos(pos) * 7 },
-            '8' => {counter += mult_pos(pos) * 8 },
-            '9' => {counter += mult_pos(pos) * 9 },
-            'a' => {counter += mult_pos(pos) * 10 },
-            'b' => {counter += mult_pos(pos) * 11 },
-            'c' => {counter += mult_pos(pos) * 12 },
-            'd' => {counter += mult_pos(pos) * 13 },
-            'e' => {counter += mult_pos(pos) * 14 },
-            'f' => {counter += mult_pos(pos) * 15 },
-             _  => {return Err(ConversionErrors::InvalidCharError)}
+        counter += usize::pow(16, pos) * ordered_chars.find(c).ok_or(ConversionErrors::InvalidCharError)?;
+
+        if debug {
+            println!("pos: {}:{}\tcounter: {}", pos, c, counter);
         }
-
-        // println!("{}: {} : {}", c, counter, mult_pos(pos));
 
         pos += 1;
     }
-    return Ok(counter);
+    return Ok(counter.to_string());
 }
 
-fn mult_pos(p: u32) -> usize {
-    return usize::pow(16, p);
-}
-
-pub fn dec2hex(data: &usize) -> String {
+pub fn dec2hex(data: &String, debug: bool) -> Result<String, ConversionErrors> {
+    
     let mut result = String::new();
+    result.push_str("0x");
+
+    let mut number = match data.parse::<usize>() {
+        Ok(i) => i,
+        Err(_e,) => return Err(ConversionErrors::IntConversionError),
+    };
     
-    // do stuff
-    
-    return result;
-}
+    // Edge case for 0
+    if number == 0 {
+        return Ok(String::from("0x0"));
+    }
+
+    // A lookup table to map remainders to hex characters
+    let ordered_chars = "0123456789abcdef".as_bytes();
+
+    ordered_chars[0];
+
+    let mut result = String::new();
+
+    while number > 0 {
+        // Get the last hex digit
+        let remainder = (number % 16) as usize;
+        // Push corresponding char to string
+        result.push(ordered_chars[remainder] as char);
+        // Move to the next hex digit
+        number /= 16;
+    }
+
+    // Because we pushed remainders from right-to-left, we must reverse the string
+    return Ok(result.chars().rev().collect());
+} 
