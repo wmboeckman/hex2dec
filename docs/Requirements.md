@@ -52,10 +52,10 @@ I plan in breaking this project down into 3 weekly sprints:
 - **Sprint 1**: Base-conversion algorithms, basic CLI functionality
     - Story Point total: 7
     - Due Feb. 14th
-- **Sprint 2**: Offset algorithm, CLI colors
+- **Sprint 2**: Code refactor, Offset algorithm
     - Story Point total: 6
     - Due Feb. 21st
-- **Sprint 3**: CLI file I/O, final integrations
+- **Sprint 3**: CLI file I/O, CLI colors, final integrations
     - Story Point total: 5
     - Due Feb. 28th
 
