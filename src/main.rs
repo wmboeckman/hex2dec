@@ -1,4 +1,5 @@
 use crate::{cli::InputChoiceGroup, err::ConversionErrors, io::BufReader, math::{base2dec, dec2base}};
+use log::{error, warn};
 
 mod cli;
 mod err;
@@ -26,6 +27,8 @@ const CONTEXT_B8: BaseContext = BaseContext {
 };
 
 fn main() {
+    env_logger::init();
+
     let args = cli::parse_cli();
 
     let mut result = String::new();
@@ -39,8 +42,6 @@ fn main() {
         None => 10, // default will be hexadecimal
     };
 
-    // process input branch here
-
     // TODO: cli args to check for known bases
 
     match args.input {
@@ -51,8 +52,8 @@ fn main() {
             result = match process_line(&s, target_base) {
                 Ok(st) => st,
                 Err(e) => {
-                    println!("ERR: {}", e);
-                    return ();
+                    error!("Conversion Error: {}", e);
+                    std::process::exit(1);
                 }
             };
         }
@@ -64,8 +65,8 @@ fn main() {
             let br = match BufReader::open(p) {
                 Ok(r) => r,
                 Err(e) => {
-                    println!("ERR: {}", e);
-                    return ();
+                    error!("File IO Error: {}", e);
+                    std::process::exit(1);
                 }
             };
 
@@ -83,7 +84,7 @@ fn main() {
                     }
                     Err(e) => {
                         if args.debug {
-                            println!("ERR: {}. Continuing", e);
+                            warn!("Conversion Error: {}. Continuing", e);
                         }
 
                         // TODO: add flag to early exit batch processing if error occurs!
