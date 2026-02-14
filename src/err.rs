@@ -5,6 +5,7 @@ pub enum ConversionErrors {
     IntConversionError,
     InvalidCharError,
     InvalidBasePrefixError,
+    EmptyInputError
 }
 
 impl fmt::Display for ConversionErrors {
@@ -13,6 +14,7 @@ impl fmt::Display for ConversionErrors {
             ConversionErrors::IntConversionError => "failed to convert input to unsigned integer",
             ConversionErrors::InvalidCharError => "invalid character provided for conversion",
             ConversionErrors::InvalidBasePrefixError => "invalid base prefix in provided string",
+            ConversionErrors::EmptyInputError => "provided string was empty",
         };
 
         write!(f, "{}", msg)

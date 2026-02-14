@@ -12,6 +12,9 @@ pub struct Cli {
     #[command(flatten)]
     pub input: InputChoiceGroup,
 
+    #[clap(long, short)]
+    pub base: Option<usize>,
+
     #[clap(long, short, name = "output")]
     pub output_file: Option<std::path::PathBuf>,
 }
@@ -29,4 +32,4 @@ pub struct InputChoiceGroup {
 
 pub fn parse_cli() -> Cli {
     return Cli::parse();
-} 
+}
