@@ -11,7 +11,7 @@ This caused a bit of a mess at the end of the sprint, and there are a few known 
 
 That all being said, we now have an easy to use cli tool that lets you convert between any base 8, 10, or 16 number!
 
-![cli-screenshot](img\2026-02-13.png)
+![cli-screenshot](img/2026-02-13.png)
 
 ### Known Bugs
 
