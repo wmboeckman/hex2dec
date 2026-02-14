@@ -1,10 +1,13 @@
 use crate::{cli::InputChoiceGroup, err::ConversionErrors, io::BufReader, math::{base2dec, dec2base}};
-use log::{error, warn};
+use env_logger::Env;
+use log::{error, warn, debug};
 
 mod cli;
 mod err;
 mod io;
 mod math;
+
+#[cfg(test)]
 mod tests;
 mod util;
 
@@ -27,22 +30,29 @@ const CONTEXT_B8: BaseContext = BaseContext {
 };
 
 fn main() {
-    env_logger::init();
 
     let args = cli::parse_cli();
 
     let mut result = String::new();
 
+    env_logger::Builder::from_env(
+        Env::default()
+        .default_filter_or(match args.debug {
+            true => "debug",
+            false => "error"
+        }))
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
+
     if args.debug {
-        println!("Debug flag enabled!");
+        debug!("Debug flag enabled!");
     }
 
     let target_base = match args.base {
         Some(i) => i,
         None => 10, // default will be hexadecimal
     };
-
-    // TODO: cli args to check for known bases
 
     match args.input {
         InputChoiceGroup {
@@ -119,6 +129,8 @@ fn process_line(line: &String, target_base: usize) -> Result<String, ConversionE
             Err(_e) => return Err(ConversionErrors::InvalidCharError)
         }
     }; 
+
+    // TODO: create a const register struct that contains every single hard-coded conversion context!
 
     let convert_result = match target_base {
         16 => dec2base(&decimal_val, CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix),
