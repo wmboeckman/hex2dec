@@ -9,7 +9,7 @@ The first sprint went over quite smoothly, with my Story Point estimations being
 
 This caused a bit of a mess at the end of the sprint, and there are a few known bugs with these lately-added features (see below). What I should have accounted for was a separate "input processing / sanitization" story to account for the headache I've been having about handling the edge cases in user input.
 
-That all being said, we now have an easy to use cli tool that lets you convert between and base 8, 10, or 16 number!
+That all being said, we now have an easy to use cli tool that lets you convert between any base 8, 10, or 16 number!
 
 ![cli-screenshot](img\2026-02-13.png)
 
