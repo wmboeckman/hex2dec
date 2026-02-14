@@ -1,5 +1,3 @@
-#[cfg(test)]
-
 use crate::CONTEXT_B16;
 use crate::math::base2dec;
 
