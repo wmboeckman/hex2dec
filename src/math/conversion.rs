@@ -1,4 +1,5 @@
-// use crate::{err::ConversionErrors, util::linear_search};
+use log::debug;
+
 use crate::util::{linear_search, err::*};
 
 
@@ -55,10 +56,9 @@ pub fn base2dec(
     let mut pos: u16 = 0;
     let mut counter: usize = 0;
 
-    // iterate over each char in reverse
     for c in stripped_data.to_ascii_lowercase().chars().rev() {
+        
         // attempt to find index within charset
-
         let index = match linear_search(&mut charset.iter(), &c) {
             Some(i) => i,
             None => {
@@ -68,10 +68,8 @@ pub fn base2dec(
 
         counter += usize::pow(base, pos as u32) * index;
 
-        // if debug {
-        //     println!("pos: {}:{}\tcounter: {}", pos, c, counter);
-        // }
-
+        debug!("pos {}: {} | counter: {}", pos, c, counter);
+        
         pos += 1;
     }
     return Ok(counter);
