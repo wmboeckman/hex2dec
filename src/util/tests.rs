@@ -1,5 +1,5 @@
-use crate::CONTEXT_B16;
-use crate::math::base2dec;
+use crate::math::conversion::*;
+use crate::math::context::*;
 
 #[test]
 fn test_basic_conversion() {

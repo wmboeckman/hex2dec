@@ -1,4 +1,6 @@
-use crate::{err::ConversionErrors, util::linear_search};
+// use crate::{err::ConversionErrors, util::linear_search};
+use crate::util::{linear_search, err::*};
+
 
 pub fn dec2base(
     data: &usize,

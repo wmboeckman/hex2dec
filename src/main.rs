@@ -1,14 +1,9 @@
-use crate::{cli::InputChoiceGroup, err::ConversionErrors, io::BufReader, math::{base2dec, dec2base}};
+use crate::{io::{buff_reader::BufReader, cli::{self, InputChoiceGroup}}, math::conversion::*, util::err::*};
 use env_logger::Env;
 use log::{error, warn, debug};
 
-mod cli;
-mod err;
 mod io;
 mod math;
-
-#[cfg(test)]
-mod tests;
 mod util;
 
 struct BaseContext<'a> {
