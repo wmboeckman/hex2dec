@@ -5,10 +5,6 @@ mod tests;
 pub mod err;
 
 
-
-
-
-
 /// linear search over a generic iterator.
 /// Takes an Iterator and target item of same type as <I as Iterator>::Item
 /// Returns an Option of Some(usize) if index is found, otherwise None
@@ -23,18 +19,18 @@ pub fn linear_search<I, T>(iter: &mut I, target: T) -> Option<usize> where I: It
     None
 }
 
-// TODO: expand functionality
+// TODO: expand functionality?
 pub fn sanitize_string(data: &String) -> String {
     return data.trim().to_string();
 }
 
-pub fn discover_base(data: &String) -> Option<(&[char], &[char; 2])> {
+pub fn discover_base(data: &String) -> Option<&BaseContext<'_>> {
     
-    // TODO: update to pull from a static struct array  
-    for context in vec![&CONTEXT_B16,&CONTEXT_B8] {
+    if data.len() < 3 { return None; } // line too short to get prefix!
+
+    for context in CONTEXT_REGISTRY.contexts {
         if data.as_bytes()[0] as char == context.prefix[0] && data.as_bytes()[1] as char == context.prefix[1] {
-            // found!
-            return Some((&context.charset,&context.prefix));
+            return Some(&context);
         }
     }
 

@@ -5,7 +5,8 @@ pub enum ConversionErrors {
     IntConversionError,
     InvalidCharError,
     InvalidBasePrefixError,
-    EmptyInputError
+    EmptyInputError,
+    UndefinedBaseContextError,
 }
 
 impl fmt::Display for ConversionErrors {
@@ -15,6 +16,7 @@ impl fmt::Display for ConversionErrors {
             ConversionErrors::InvalidCharError => "invalid character provided for conversion",
             ConversionErrors::InvalidBasePrefixError => "invalid base prefix in provided string",
             ConversionErrors::EmptyInputError => "provided string was empty",
+            ConversionErrors::UndefinedBaseContextError => "provided base for conversion is undefined",
         };
 
         write!(f, "{}", msg)

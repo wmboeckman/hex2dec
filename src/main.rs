@@ -3,7 +3,7 @@ use crate::io::{buff_reader::*, cli::*};
 use crate::util::err::*;
 
 use env_logger::Env;
-use log::{error, warn, debug};
+use log::{error, warn};
 
 mod io;
 mod math;
@@ -12,8 +12,6 @@ mod util;
 fn main() {
 
     let args = parse_cli();
-
-    let mut result = String::new();
 
     env_logger::Builder::from_env(
         Env::default()
@@ -24,16 +22,15 @@ fn main() {
         .format_timestamp(None)
         .format_target(false)
         .init();
-
-    if args.debug {
-        debug!("Debug flag enabled!");
-    }
-
+    
     let target_base = match args.base {
         Some(i) => i,
-        None => 10, // default will be hexadecimal
+        None => 10, // default will be decimal (base-10)
     };
+    
+    let mut result = String::new();
 
+    // String input XOR Path?
     match args.input {
         InputChoiceGroup {
             str: Some(s),
@@ -62,8 +59,11 @@ fn main() {
 
             for line in br {
                 let clean_line = match line {
-                    Ok(l) => util::sanitize_string(&l),
-                    Err(e) => panic!("{}", e), //bad, I know
+                    Ok(l) => l,
+                    Err(e) => {
+                        error!("File IO Errpr: {}", e);
+                        continue;
+                    },
                 };
 
                 match process_line(&clean_line, target_base) {
@@ -85,7 +85,7 @@ fn main() {
         _ => panic!("HOW DID YOU GET HERE"), // clap should make this impossible to reach
     };
 
-    // for now, just print
+    // TODO: impliment file writing option
     println!("{}", result);
 }
 
@@ -98,25 +98,30 @@ fn process_line(line: &String, target_base: usize) -> Result<String, ConversionE
     let possible_context = util::discover_base(&line_sanitized);
 
     let decimal_val = match possible_context {
-        Some((charset, prefix)) => {
-            match base2dec(&line_sanitized, charset.len(), charset, prefix) {
+        Some(context) => {
+            match base2dec(&line_sanitized, context.base, context.charset, &context.prefix) {
                 Ok(i) => i,
                 Err(e) => return Err(e)
             }
         },
         None => match line_sanitized.parse::<usize>() {
             Ok(i) => i,
-            Err(_e) => return Err(ConversionErrors::InvalidCharError)
+            Err(_e) => return Err(ConversionErrors::IntConversionError)
         }
     }; 
 
-    // TODO: create a const register struct that contains every single hard-coded conversion context!
-
     let convert_result = match target_base {
-        16 => dec2base(&decimal_val, CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix),
-        8 => dec2base(&decimal_val, CONTEXT_B8.base, &CONTEXT_B8.charset, &CONTEXT_B8.prefix),
+
         10 => Ok(decimal_val.to_string()),
-        _ => return Err(ConversionErrors::InvalidBasePrefixError)
+        
+        n =>  {
+            for context in CONTEXT_REGISTRY.contexts {
+                if context.base == n {
+                    return dec2base(&decimal_val, context.base, context.charset, &context.prefix);
+                }
+            }
+            return Err(ConversionErrors::UndefinedBaseContextError);
+        }
     };
 
     return convert_result;
