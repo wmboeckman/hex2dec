@@ -1,4 +1,7 @@
-use crate::{io::{buff_reader::BufReader, cli::{self, InputChoiceGroup}}, math::conversion::*, util::err::*};
+use crate::math::{context::*, conversion::*};
+use crate::io::{buff_reader::*, cli::*};
+use crate::util::err::*;
+
 use env_logger::Env;
 use log::{error, warn, debug};
 
@@ -6,27 +9,9 @@ mod io;
 mod math;
 mod util;
 
-struct BaseContext<'a> {
-    base: usize,
-    charset: &'a [char],
-    prefix: [char; 2]
-} 
-
-const CONTEXT_B16: BaseContext = BaseContext {
-    base: 16,
-    charset: &['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'],
-    prefix: ['0', 'x']
-};
-
-const CONTEXT_B8: BaseContext = BaseContext {
-    base: 8,
-    charset: &['0', '1', '2', '3', '4', '5', '6', '7'],
-    prefix: ['0', 'o']
-};
-
 fn main() {
 
-    let args = cli::parse_cli();
+    let args = parse_cli();
 
     let mut result = String::new();
 
