@@ -50,7 +50,13 @@ fn main() {
                     let a = match conv2dec(&util::sanitize_string(&inputs[i])) {
                         Ok(i) => i,
                         Err(e) => {
-                            warn!("Conversion Error: {}. continuing", e);
+                            if args.fail_fast {
+                                error!("[stdin:{}] Conversion Error: {}", i, e);
+                                std::process::exit(1);
+                            }
+
+                            warn!("[stdin:{}] Conversion Error: {}", i, e);
+                            
                             continue;
                         }
                     };
@@ -58,7 +64,13 @@ fn main() {
                     let b = match conv2dec(&util::sanitize_string(&inputs[i+1])) {
                         Ok(i) => i,
                         Err(e) => {
-                            warn!("Conversion Error: {}. continuing", e);
+                            if args.fail_fast {
+                                error!("[stdin:{}] Conversion Error: {}", i, e);
+                                std::process::exit(1);
+                            }
+
+                            warn!("[stdin:{}] Conversion Error: {}", i, e);
+
                             continue;
                         }
                     };
@@ -70,6 +82,7 @@ fn main() {
                 }
 
             } else {
+                let mut i: usize = 0;
                 for s in inputs {
                     match process_line(&s, target_base) {
                         Ok(st) => {
@@ -77,9 +90,15 @@ fn main() {
                             result.push('\n');
                         },
                         Err(e) => {
-                            warn!("Conversion Error: {}. Continuing", e);
+                            if args.fail_fast {
+                                error!("[stdin:{}] Conversion Error: {}", i, e);
+                                std::process::exit(1);
+                            }
+
+                            warn!("[stdin:{}] Conversion Error: {}", i, e);
                         }
                     }
+                    i += 1;
                 }
             }
 
@@ -89,7 +108,7 @@ fn main() {
             path: Some(p)
         } => {
             // attempt to open file from provided path, return a buffer reader
-            let br = match BufReader::open(p) {
+            let br = match BufReader::open(&p) {
                 Ok(r) => r,
                 Err(e) => {
                     error!("File IO Error: {}", e);
@@ -99,11 +118,21 @@ fn main() {
 
             // TODO: split lines on whitespace chars 
 
+            // TODO: implement offset calc for file input
+
+            let mut lc: usize = 0;
             for line in br {
+                lc += 1;
                 let clean_line = match line {
                     Ok(l) => l,
                     Err(e) => {
-                        error!("File IO Error: {}", e);
+                        if args.fail_fast {
+                            error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                            std::process::exit(1);
+                        }
+                        
+                        warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                        
                         continue;
                     },
                 };
@@ -115,9 +144,12 @@ fn main() {
                         result.push('\n');
                     }
                     Err(e) => {
-                        warn!("Conversion Error: {}. Continuing", e);
+                        if args.fail_fast {
+                            error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                            std::process::exit(1);
+                        }
                         
-                        // TODO: add flag to early exit batch processing if error occurs!
+                        warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
                     }
                 }
             }
@@ -126,14 +158,12 @@ fn main() {
     };
 
     // TODO: impliment file writing option
-    println!("{}", result);
+    print!("{}", result);
 }
 
 fn process_line(line: &String, target_base: usize) -> Result<String, ConversionErrors>{
 
     let line_sanitized = util::sanitize_string(line);
-
-    // TODO: skip empty strings
     
     debug!("\"{}\" -> \"{}\"", line.trim_end(), line_sanitized);
 

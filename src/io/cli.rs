@@ -9,16 +9,19 @@ pub struct Cli {
     #[clap(long, short)]
     pub debug: bool,
 
+    #[clap(long("ffast"), short('f'))]
+    pub fail_fast: bool,
+
     #[clap(long, short)]
     pub offset: bool,
-
-    #[command(flatten)]
-    pub input: InputChoiceGroup,
 
     #[clap(long, short)]
     pub base: Option<usize>,
 
-    #[clap(long("output"), short('O'), name = "output")]
+    #[command(flatten)]
+    pub input: InputChoiceGroup,
+
+    #[clap(long("out"), short('O'), name = "PATH")]
     pub output_file: Option<std::path::PathBuf>,
 }
 
@@ -28,7 +31,7 @@ pub struct InputChoiceGroup {
     #[arg(name = "input")]
     pub str: Option<Vec<String>>,
 
-    #[arg(short('f'), long("file"))]
+    #[arg(short('I'), long("in"))]
     pub path: Option<PathBuf>,
 }
 
