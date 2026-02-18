@@ -9,13 +9,16 @@ pub struct Cli {
     #[clap(long, short)]
     pub debug: bool,
 
+    #[clap(long, short)]
+    pub offset: bool,
+
     #[command(flatten)]
     pub input: InputChoiceGroup,
 
     #[clap(long, short)]
     pub base: Option<usize>,
 
-    #[clap(long, short, name = "output")]
+    #[clap(long("output"), short('O'), name = "output")]
     pub output_file: Option<std::path::PathBuf>,
 }
 
@@ -23,7 +26,7 @@ pub struct Cli {
 #[group(required = true, multiple = false)]
 pub struct InputChoiceGroup {
     #[arg(name = "input")]
-    pub str: Option<String>,
+    pub str: Option<Vec<String>>,
 
     #[arg(short('f'), long("file"))]
     pub path: Option<PathBuf>,
