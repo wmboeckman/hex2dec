@@ -17,7 +17,7 @@ fn main() {
         Env::default()
         .default_filter_or(match args.debug {
             true => "debug",
-            false => "error"
+            false => "warn"
         }))
         .format_timestamp(None)
         .format_target(false)
@@ -30,7 +30,12 @@ fn main() {
     
     let mut result = String::new();
 
-    // TODO: break appart each branch into separate functions
+    /* TODO: break appart each branch into separate functions
+    ** - use generic iterator type to use both Vec<String> and BufReader?
+    ** BufReader -> Iter<Result<Rc<String>, Error>> (very messy to unpack!)
+    ** 
+    */ 
+ 
     // String input XOR Path?
     match args.input {
         InputChoiceGroup {
@@ -108,51 +113,109 @@ fn main() {
             path: Some(p)
         } => {
             // attempt to open file from provided path, return a buffer reader
-            let br = match BufReader::open(&p) {
+            let mut br = match BufReader::open(&p) {
                 Ok(r) => r,
                 Err(e) => {
                     error!("File IO Error: {}", e);
                     std::process::exit(1);
                 }
             };
-
+            
             // TODO: split lines on whitespace chars 
 
-            // TODO: implement offset calc for file input
-
             let mut lc: usize = 0;
-            for line in br {
-                lc += 1;
-                let clean_line = match line {
-                    Ok(l) => l,
-                    Err(e) => {
-                        if args.fail_fast {
-                            error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                            std::process::exit(1);
+            if args.offset {
+                loop {
+                    lc += 1;
+                    let a = match br.next() {
+                        Some(i) => match i {
+                            Ok(j) => j.to_string(),
+                            Err(e) => {
+                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                                std::process::exit(1);
+                            }
+                        },
+                        None => break
+                    };
+                    lc += 1;
+                    let b: String = match br.next() {
+                        Some(i) => match i {
+                            Ok(j) => j.to_string(),
+                            Err(e) => {
+                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                                std::process::exit(1);
+                            }
+                        },
+                        None => {
+                            warn!("Couldn't process last offset: missing line {}", lc);
+                            break
                         }
-                        
-                        warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                        
-                        continue;
-                    },
-                };
+                    };
 
-                match process_line(&clean_line, target_base) {
-                    Ok(s) => {
-                        // save the output to a string buffer to send as output after debug messages
-                        result.push_str(&s);
-                        result.push('\n');
-                    }
-                    Err(e) => {
-                        if args.fail_fast {
-                            error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                            std::process::exit(1);
+                    let aa= match conv2dec(&a) {
+                        Ok(i) => i,
+                        Err(e) => {
+                            if args.fail_fast {
+                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                                std::process::exit(1);
+                            }
+                            warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+
+                            continue;
                         }
-                        
-                        warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                    };
+                    let bb= match conv2dec(&b) {
+                        Ok(i) => i,
+                        Err(e) => {
+                            if args.fail_fast {
+                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                                std::process::exit(1);
+                            }
+                            warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+
+                            continue;
+                        }
+                    };
+
+                    result.push_str(&conv2base(calc_offset(aa,bb), target_base).unwrap());
+                    result.push('\n');
+                }
+
+
+            } else {
+                for line in br {
+                    lc += 1;
+                    let clean_line = match line {
+                        Ok(l) => l,
+                        Err(e) => {
+                            if args.fail_fast {
+                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                                std::process::exit(1);
+                            }
+                            
+                            warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
+                            
+                            continue;
+                        },
+                    };
+    
+                    match process_line(&clean_line, target_base) {
+                        Ok(s) => {
+                            // save the output to a string buffer to send as output after debug messages
+                            result.push_str(&s);
+                            result.push('\n');
+                        }
+                        Err(e) => {
+                            if args.fail_fast {
+                                error!("[{}:{}] Conversion Error: {}", &p.to_str().unwrap(), lc, e);
+                                std::process::exit(1);
+                            }
+                            
+                            warn!("[{}:{}] Conversion Error: {}", &p.to_str().unwrap(), lc, e);
+                        }
                     }
                 }
-            }
+            } 
         }
         _ => panic!("HOW DID YOU GET HERE"), // clap should make this impossible to reach
     };
@@ -161,31 +224,33 @@ fn main() {
     print!("{}", result);
 }
 
-fn process_line(line: &String, target_base: usize) -> Result<String, ConversionErrors>{
-
-    let line_sanitized = util::sanitize_string(line);
+fn process_line(line: &String, target_base: usize) -> Result<String, ConversionErrors> {
     
-    debug!("\"{}\" -> \"{}\"", line.trim_end(), line_sanitized);
+    debug!("\"{}\" -> \"{}\"", line.trim_end(), &line);
 
-    let decimal_val = match conv2dec(&line_sanitized) {
+    let decimal_val = match conv2dec(&line) {
         Ok(i) => i,
-        Err(_e) => return Err(ConversionErrors::IntConversionError)
+        Err(e) => return Err(e)
     };
 
     return conv2base(decimal_val, target_base);
 }
 
+// TODO: Move below functions to 'util' module
+
 fn conv2dec(line: &String) -> Result<usize, ConversionErrors> {
-    let possible_context = util::discover_base(&line);
+    let line_sanitized = util::sanitize_string(line);
+    
+    let possible_context = util::discover_base(&line_sanitized);
 
     let decimal_val = match possible_context {
         Some(context) => {
-            match base2dec(&line, context.base, context.charset, &context.prefix) {
+            match base2dec(&line_sanitized, context.base, context.charset, &context.prefix) {
                 Ok(i) => i,
                 Err(e) => return Err(e)
             }
         },
-        None => match line.parse::<usize>() { // check for base-10 decimal
+        None => match line_sanitized.parse::<usize>() { // check for base-10 decimal
             Ok(i) => i,
             Err(_e) => return Err(ConversionErrors::IntConversionError)
         }
