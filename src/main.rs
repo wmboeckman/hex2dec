@@ -52,18 +52,18 @@ fn main() {
         }
 
         // iter. groups of 2
-        let mut i: usize = 1;
-        while i < lines.len() / 2 {
+        let mut i: usize = 0;
+        while i <= lines.len() / 2 {
             
             let a = match conv2dec(&lines[i]) {
                 Ok(i) => i,
                 Err(e) => {
                     if args.fail_fast {
-                        error!("[line:{}] Conversion Error: {}", i, e);
+                        error!("[line:{}] Conversion Error: {}", i+1, e);
                         std::process::exit(1);
                     }
 
-                    warn!("[line:{}] Conversion Error: {}", i, e);
+                    warn!("[line:{}] Conversion Error: {}", i+1, e);
                     
                     i += 2; continue;
                 }
@@ -73,11 +73,11 @@ fn main() {
                 Ok(i) => i,
                 Err(e) => {
                     if args.fail_fast {
-                        error!("[line:{}] Conversion Error: {}", i+1, e);
+                        error!("[line:{}] Conversion Error: {}", i+2, e);
                         std::process::exit(1);
                     }
 
-                    warn!("[line:{}] Conversion Error: {}", i+1, e);
+                    warn!("[line:{}] Conversion Error: {}", i+2, e);
 
                     i += 2; continue;
                 }
@@ -87,11 +87,11 @@ fn main() {
                 Ok(s) => s,
                 Err(e) => {
                     if args.fail_fast {
-                        error!("[lines:{},{}] Conversion Error: {}", i,i+1, e);
+                        error!("[lines:{},{}] Conversion Error: {}", i+1,i+2, e);
                         std::process::exit(1);
                     }
 
-                    warn!("[lines:{},{}] Conversion Error: {}", i,i+1, e);
+                    warn!("[lines:{},{}] Conversion Error: {}", i+1,i+2, e);
 
                     i += 2; continue;
                 }
