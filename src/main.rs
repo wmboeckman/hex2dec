@@ -83,7 +83,21 @@ fn main() {
                 }
             };
 
-            result.push_str(&conv2base(calc_offset(a,b), target_base).unwrap());
+            let offset = match conv2base(calc_offset(a,b), target_base) {
+                Ok(s) => s,
+                Err(e) => {
+                    if args.fail_fast {
+                        error!("[lines:{},{}] Conversion Error: {}", i,i+1, e);
+                        std::process::exit(1);
+                    }
+
+                    warn!("[lines:{},{}] Conversion Error: {}", i,i+1, e);
+
+                    i += 2; continue;
+                }
+            };
+
+            result.push_str(&offset);
             result.push('\n');
             
             i += 2;
@@ -109,7 +123,7 @@ fn main() {
         }
     }
 
-    // TODO: impliment file writing option
+    // TODO: implement file writing option
     print!("{}", result);
 }
 

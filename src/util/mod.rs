@@ -19,7 +19,6 @@ pub fn linear_search<I, T>(iter: &mut I, target: T) -> Option<usize> where I: It
     return None;
 }
 
-// TODO: expand functionality?
 pub fn sanitize_string(data: &String) -> String {
     return data.trim().to_string();
 }
