@@ -23,14 +23,19 @@ User stories have been broken up into relevant categories, along with a general 
 - As a user, I want the program to print it's output to the console.
     - *Formatting?*
 
-#### Extended: offset calculation (3 SP)
+#### Extended: Offset Calculation (3 SP)
 
 - As a user, I want to input sets of two hexadecimal numbers and get their offset in bytes in return.
 
-#### Extended: CLI color formatting (3 SP)
+#### Extended: CLI color formatting (1 SP)
 
 - As a user, I want the CLI output in color to increase readability in the terminal.
     - *Alternating colors by row?*
+
+#### Extended: Console Logging (1 SP)
+
+- As a user, I want the ability to view additional information about the program's current processing in the terminal (verbose logging).
+    - *simple toggle flag? Or selectable log levels?*
 
 #### Optional: files as input / output (5 SP)
 
@@ -52,11 +57,11 @@ I plan in breaking this project down into 3 weekly sprints:
 - **Sprint 1**: Base-conversion algorithms, basic CLI functionality
     - Story Point total: 7
     - Due Feb. 14th
-- **Sprint 2**: Code refactor, Offset algorithm
-    - Story Point total: 6
+- **Sprint 2**: Code refactor, Offset Calculation, Console Logging
+    - Story Point total: 4
     - Due Feb. 21st
-- **Sprint 3**: CLI file I/O, CLI colors, final integrations
-    - Story Point total: 5
+- **Sprint 3**: CLI file I/O, CLI color formatting, final integrations
+    - Story Point total: 6
     - Due Feb. 28th
 
 ## System Design
@@ -71,7 +76,8 @@ The application should keep the business logic separated from the user interface
 
 #### Relevant Rust Libraries:
 
-- [clap](https://docs.rs/clap/latest/clap/index.html): a CLI parser for Rust
+- [clap](https://docs.rs/clap/latest/clap/): a CLI parser for Rust
+- [log](https://docs.rs/log/latest/log/) and [env_logger](https://docs.rs/env_logger/latest/env_logger/): customizable logging macros
 
 ## Testing
 
