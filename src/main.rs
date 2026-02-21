@@ -1,5 +1,5 @@
 use crate::math::{context::*, conversion::*, offset::*};
-use crate::io::{buff_reader::*, cli::*};
+use crate::io::{cli::*, lines_from_file};
 use crate::util::err::*;
 
 use env_logger::Env;
@@ -30,195 +30,85 @@ fn main() {
     
     let mut result = String::new();
 
-    /* TODO: break appart each branch into separate functions
-    ** - use generic iterator type to use both Vec<String> and BufReader?
-    ** BufReader -> Iter<Result<Rc<String>, Error>> (very messy to unpack!)
-    ** 
-    */ 
- 
-    // String input XOR Path?
-    match args.input {
+    let lines = match args.input {
+        
         InputChoiceGroup {
-            str: Some(inputs),
-            path: None
-        } => {
-            if args.offset {
-                if inputs.len() % 2 != 0 {
-                    error!("Offset requires an even number of inputs!");
-                    std::process::exit(1);
-                }
+        str: Some(inputs),
+        path: None
+        } => inputs,
 
-                let mut i = 0;
-                // iter. groups of 2
-                while i <= inputs.len() / 2 {
-                    
-                    let a = match conv2dec(&util::sanitize_string(&inputs[i])) {
-                        Ok(i) => i,
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[stdin:{}] Conversion Error: {}", i, e);
-                                std::process::exit(1);
-                            }
-
-                            warn!("[stdin:{}] Conversion Error: {}", i, e);
-                            
-                            continue;
-                        }
-                    };
-
-                    let b = match conv2dec(&util::sanitize_string(&inputs[i+1])) {
-                        Ok(i) => i,
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[stdin:{}] Conversion Error: {}", i, e);
-                                std::process::exit(1);
-                            }
-
-                            warn!("[stdin:{}] Conversion Error: {}", i, e);
-
-                            continue;
-                        }
-                    };
-
-                    result.push_str(&conv2base(calc_offset(a,b), target_base).unwrap());
-                    result.push('\n');
-                    
-                    i += 2;
-                }
-
-            } else {
-                let mut i: usize = 0;
-                for s in inputs {
-                    match process_line(&s, target_base) {
-                        Ok(st) => {
-                            result.push_str(&st);
-                            result.push('\n');
-                        },
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[stdin:{}] Conversion Error: {}", i, e);
-                                std::process::exit(1);
-                            }
-
-                            warn!("[stdin:{}] Conversion Error: {}", i, e);
-                        }
-                    }
-                    i += 1;
-                }
-            }
-
-        }
         InputChoiceGroup {
-            str: None,
-            path: Some(p)
-        } => {
-            // attempt to open file from provided path, return a buffer reader
-            let mut br = match BufReader::open(&p) {
-                Ok(r) => r,
-                Err(e) => {
-                    error!("File IO Error: {}", e);
-                    std::process::exit(1);
-                }
-            };
-            
-            // TODO: split lines on whitespace chars 
+        str: None,
+        path: Some(p)
+        } => lines_from_file(p),
 
-            let mut lc: usize = 0;
-            if args.offset {
-                loop {
-                    lc += 1;
-                    let a = match br.next() {
-                        Some(i) => match i {
-                            Ok(j) => j.to_string(),
-                            Err(e) => {
-                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                                std::process::exit(1);
-                            }
-                        },
-                        None => break
-                    };
-                    lc += 1;
-                    let b: String = match br.next() {
-                        Some(i) => match i {
-                            Ok(j) => j.to_string(),
-                            Err(e) => {
-                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                                std::process::exit(1);
-                            }
-                        },
-                        None => {
-                            warn!("Couldn't process last offset: missing line {}", lc);
-                            break
-                        }
-                    };
-
-                    let aa= match conv2dec(&a) {
-                        Ok(i) => i,
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                                std::process::exit(1);
-                            }
-                            warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-
-                            continue;
-                        }
-                    };
-                    let bb= match conv2dec(&b) {
-                        Ok(i) => i,
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                                std::process::exit(1);
-                            }
-                            warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-
-                            continue;
-                        }
-                    };
-
-                    result.push_str(&conv2base(calc_offset(aa,bb), target_base).unwrap());
-                    result.push('\n');
-                }
-
-
-            } else {
-                for line in br {
-                    lc += 1;
-                    let clean_line = match line {
-                        Ok(l) => l,
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                                std::process::exit(1);
-                            }
-                            
-                            warn!("[{}:{}] File IO Error: {}", &p.to_str().unwrap(), lc, e);
-                            
-                            continue;
-                        },
-                    };
-    
-                    match process_line(&clean_line, target_base) {
-                        Ok(s) => {
-                            // save the output to a string buffer to send as output after debug messages
-                            result.push_str(&s);
-                            result.push('\n');
-                        }
-                        Err(e) => {
-                            if args.fail_fast {
-                                error!("[{}:{}] Conversion Error: {}", &p.to_str().unwrap(), lc, e);
-                                std::process::exit(1);
-                            }
-                            
-                            warn!("[{}:{}] Conversion Error: {}", &p.to_str().unwrap(), lc, e);
-                        }
-                    }
-                }
-            } 
-        }
         _ => panic!("HOW DID YOU GET HERE"), // clap should make this impossible to reach
     };
+
+    // offset feature requires even number of inputs
+    if args.offset {
+        if lines.len() % 2 != 0 {
+            error!("Offset requires an even number of inputs!");
+            std::process::exit(1);
+        }
+
+        // iter. groups of 2
+        let mut i: usize = 0;
+        while i <= lines.len() / 2 {
+            
+            let a = match conv2dec(&util::sanitize_string(&lines[i])) {
+                Ok(i) => i,
+                Err(e) => {
+                    if args.fail_fast {
+                        error!("[stdin:{}] Conversion Error: {}", i, e);
+                        std::process::exit(1);
+                    }
+
+                    warn!("[stdin:{}] Conversion Error: {}", i, e);
+                    
+                    i += 2; continue;
+                }
+            };
+
+            let b = match conv2dec(&util::sanitize_string(&lines[i+1])) {
+                Ok(i) => i,
+                Err(e) => {
+                    if args.fail_fast {
+                        error!("[stdin:{}] Conversion Error: {}", i+1, e);
+                        std::process::exit(1);
+                    }
+
+                    warn!("[stdin:{}] Conversion Error: {}", i+1, e);
+
+                    i += 2; continue;
+                }
+            };
+
+            result.push_str(&conv2base(calc_offset(a,b), target_base).unwrap());
+            result.push('\n');
+            
+            i += 2;
+        }
+    } else {
+        let mut i: usize = 0;
+        for s in lines {
+            match process_line(&s, target_base) {
+                Ok(st) => {
+                    result.push_str(&st);
+                    result.push('\n');
+                },
+                Err(e) => {
+                    if args.fail_fast {
+                        error!("[stdin:{}] Conversion Error: {}", i, e);
+                        std::process::exit(1);
+                    }
+    
+                    warn!("[stdin:{}] Conversion Error: {}", i, e);
+                }
+            }
+            i += 1;
+        }
+    }
 
     // TODO: impliment file writing option
     print!("{}", result);
