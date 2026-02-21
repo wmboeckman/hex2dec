@@ -1,4 +1,4 @@
-use crate::math::context::*;
+use crate::{math::{context::*, conversion::*}, util::err::ConversionErrors};
 
 #[cfg(test)]
 mod tests;
@@ -35,4 +35,43 @@ pub fn discover_base(data: &String) -> Option<&BaseContext<'_>> {
     }
 
     return None;
+}
+
+pub fn conv2dec(line: &String) -> Result<usize, ConversionErrors> {
+    let line_sanitized = sanitize_string(line);
+    
+    let possible_context = discover_base(&line_sanitized);
+
+    let decimal_val = match possible_context {
+        Some(context) => {
+            match base2dec(&line_sanitized, context.base, context.charset, &context.prefix) {
+                Ok(i) => i,
+                Err(e) => return Err(e)
+            }
+        },
+        None => match line_sanitized.parse::<usize>() { // check for base-10 decimal
+            Ok(i) => i,
+            Err(_e) => return Err(ConversionErrors::IntConversionError)
+        }
+    };
+
+    return Ok(decimal_val);
+}
+
+pub fn conv2base(input: usize, target_base: usize) -> Result<String, ConversionErrors> {
+    let convert_result = match target_base {
+
+        10 => Ok(input.to_string()),
+        
+        n =>  {
+            for context in CONTEXT_REGISTRY.contexts {
+                if context.base == n {
+                    return dec2base(&input, context.base, context.charset, &context.prefix);
+                }
+            }
+            return Err(ConversionErrors::UndefinedBaseContextError);
+        }
+    };
+
+    return convert_result;
 }
