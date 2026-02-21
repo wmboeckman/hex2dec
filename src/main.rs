@@ -53,10 +53,10 @@ fn main() {
 
         // iter. groups of 2
         let mut i: usize = 0;
-        while i <= lines.len() / 2 {
+        while i < lines.len() {
             
             let a = match conv2dec(&lines[i]) {
-                Ok(i) => i,
+                Ok(dec) => dec,
                 Err(e) => {
                     if args.fail_fast {
                         error!("[line:{}] Conversion Error: {}", i+1, e);
@@ -70,7 +70,7 @@ fn main() {
             };
 
             let b = match conv2dec(&lines[i+1]) {
-                Ok(i) => i,
+                Ok(dec) => dec,
                 Err(e) => {
                     if args.fail_fast {
                         error!("[line:{}] Conversion Error: {}", i+2, e);
