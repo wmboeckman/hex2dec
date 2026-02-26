@@ -3,25 +3,20 @@ use crate::math::context::*;
 
 #[test]
 fn test_basic_conversion() {
-    // Simple single digits
-    assert_eq!(base2dec(&"0x0".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 0);
-    assert_eq!(base2dec(&"0x1".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 1);
-    assert_eq!(base2dec(&"0x9".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 9);
-    assert_eq!(base2dec(&"0xA".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 10);
-    assert_eq!(base2dec(&"0xF".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 15);
-}
+    // 
+    const MAX_DECIMAL: usize = 10000;
 
-#[test]
-fn test_multi_digit_conversion() {
-    // Testing positional weight (16^1, 16^0, etc.)
-    assert_eq!(base2dec(&"0x0010".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 16);
-    assert_eq!(base2dec(&"0x00FF".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 255);
-    assert_eq!(base2dec(&"0x1A2B".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 6699);
-    assert_eq!(base2dec(&"0x0000".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 0);
-    assert_eq!(base2dec(&"0x000f".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 15);
-    assert_eq!(base2dec(&"0x00f0".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 240);
-    assert_eq!(base2dec(&"0x0f00".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 3840);
-    assert_eq!(base2dec(&"0xf000".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 61440);
+    for context in CONTEXT_REGISTRY.contexts {
+        for n in 0..MAX_DECIMAL {
+            let input = match context.base {
+                16 => format!("{:#x}", n).to_string(),
+                8 => format!("{:#o}", n).to_string(),
+                _ => panic!()
+            };
+
+            assert_eq!(base2dec(&input, context.base, &context.charset, &context.prefix).unwrap(), n);
+        }
+    }
 }
 
 #[test]
@@ -33,18 +28,22 @@ fn test_case_insensitivity() {
 
 #[test]
 fn test_large_values() {
-    // Testing the upper bounds of a 64-bit integer
-    assert_eq!(base2dec(&"0xFFFFFFFF".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), 4294967295);
+    // Testing the upper bounds of the 'usize' integer type
+    assert_eq!(base2dec(&format!("{:#x}", std::usize::MAX).to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).unwrap(), std::usize::MAX);
+    assert_eq!(base2dec(&format!("{:#o}", std::usize::MAX).to_string(), CONTEXT_B8.base, &CONTEXT_B8.charset, &CONTEXT_B8.prefix).unwrap(), std::usize::MAX);
 }
 
 #[test]
 fn test_invalid_characters() {
-    // The function should return an Error for non-hex inputs
+    // Should return an Error for invalid chars
     assert!(base2dec(&"0x12G4".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).is_err());
+    assert!(base2dec(&"0o1289".to_string(), CONTEXT_B8.base, &CONTEXT_B8.charset, &CONTEXT_B8.prefix).is_err());
 }
 
 #[test]
 fn test_empty_string() {
-    // Deciding how to handle an empty input
-    assert!(base2dec(&"".to_string(), CONTEXT_B16.base, &CONTEXT_B16.charset, &CONTEXT_B16.prefix).is_err());
+    // Empty input returns error
+    for context in CONTEXT_REGISTRY.contexts {
+        assert!(base2dec(&"".to_string(), context.base, &context.charset, &context.prefix).is_err());
+    }
 }
