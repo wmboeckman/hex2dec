@@ -1,5 +1,5 @@
 use crate::math::offset::*;
-use crate::io::{cli::*, lines_from_file};
+use crate::io::{cli::*, file::*};
 use crate::util::{*, err::*};
 
 use env_logger::Env;
@@ -27,7 +27,8 @@ fn main() {
         None => 10, // default will be decimal (base-10)
     };
     
-    let mut result = String::new();
+    //let mut result = String::new();
+    let mut result: Vec<String> = vec![];
 
     let lines = match args.input {
         
@@ -97,8 +98,7 @@ fn main() {
                 }
             };
 
-            result.push_str(&offset);
-            result.push('\n');
+            result.push(offset);
             
             i += 2;
         }
@@ -107,8 +107,7 @@ fn main() {
         for line in lines {
             match process_line(&line, target_base) {
                 Ok(st) => {
-                    result.push_str(&st);
-                    result.push('\n');
+                    result.push(st);
                 },
                 Err(e) => {
                     if args.fail_fast {
@@ -124,7 +123,18 @@ fn main() {
     }
 
     // TODO: implement file writing option
-    print!("{}", result);
+
+    match args.output_file {
+        Some(path) => {
+            write_lines_to_file(path, result);
+        },
+        None => {
+            for line in result {
+                println!("{}", line);
+            }
+        }
+    }
+
 }
 
 fn process_line(line: &String, target_base: usize) -> Result<String, ConversionErrors> {
