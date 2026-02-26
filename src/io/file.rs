@@ -15,22 +15,28 @@ pub fn lines_from_file(filename: impl AsRef<Path>) -> Vec<String> {
         }
     };
     let buf = BufReader::new(file);
-    buf.lines()
-        .map(|l| l.expect("Could not parse line"))
-        .collect()
+    buf.lines().map(|l| match l {
+        Ok(s) => s,
+        Err(e) => {
+            error!("File IO: {}", e);
+            std::process::exit(2);
+        }
+    }).collect()
 }
 
 pub fn write_lines_to_file(filename: impl AsRef<Path>, data: Vec<String>) {
-    let file = match File::create(filename) {
+    let file = match File::create(&filename) {
         Ok(f) => f,
         Err(e) => {
-            error!("{}", e);
+            error!("File IO: {}", e);
             std::process::exit(2);
         }
     };
 
     let mut buf = BufWriter::new(file);
     
+    debug!("Beginning write to file: {}", filename.as_ref().to_str().unwrap());
+
     for line in data {
         match buf.write((line + "\n").as_bytes()) {
             Ok(n) => {
