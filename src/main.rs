@@ -122,8 +122,6 @@ fn main() {
         }
     }
 
-    // TODO: implement file writing option
-
     match args.output_file {
         Some(path) => {
             write_lines_to_file(path, result);
