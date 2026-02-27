@@ -3,14 +3,21 @@ use crate::io::{cli::*, file::*};
 use crate::util::{*, err::*};
 
 use env_logger::Env;
-use log::{debug, error, warn};
+use log::{error, warn};
+
+use std::io::Write;
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 mod io;
 mod math;
 mod util;
 
+const COLOR_PRINT_LINE_MIN: usize = 10;
+
 fn main() {
     let args = parse_cli();
+
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
     env_logger::Builder::from_env(
         Env::default()
@@ -26,8 +33,7 @@ fn main() {
         Some(i) => i,
         None => 10, // default will be decimal (base-10)
     };
-    
-    //let mut result = String::new();
+
     let mut result: Vec<String> = vec![];
 
     let lines = match args.input {
@@ -127,8 +133,30 @@ fn main() {
             write_lines_to_file(path, result);
         },
         None => {
-            for line in result {
-                println!("{}", line);
+
+            // TODO: Better print formatting
+            
+            let mut i: usize = 0;
+            for line in &result {
+                if result.len() >= COLOR_PRINT_LINE_MIN {
+                    
+                    let color: Color;
+                    
+                    if i % 2 == 0 {
+                        color = Color::White;
+                    } else {
+                        color = Color::Rgb(150, 150, 150);
+                    }
+                    
+                    stdout.set_color(ColorSpec::new().set_fg(Some(color))).unwrap();
+                    writeln!(&mut stdout, "{}", line).unwrap();
+                    stdout.reset().unwrap();
+
+                } else {
+                    println!("{}", line);
+                }
+
+                i += 1;
             }
         }
     }
@@ -136,8 +164,6 @@ fn main() {
 }
 
 fn process_line(line: &String, target_base: usize) -> Result<String, ConversionErrors> {
-    
-    debug!("\"{}\" -> \"{}\"", line.trim_end(), &line);
 
     let decimal_val = match conv2dec(&line) {
         Ok(i) => i,

@@ -139,6 +139,7 @@ dependencies = [
  "clap",
  "env_logger",
  "log",
+ "termcolor",
 ]
 
 [[package]]

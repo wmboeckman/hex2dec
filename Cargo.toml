@@ -13,6 +13,9 @@ version = "0.4.29"
 [dependencies.env_logger]
 version = "0.10"
 
+[dependencies.termcolor]
+version = "1.4.1"
+
 [profile.release]
 opt-level = 'z'
 codegen-units = 1
