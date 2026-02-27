@@ -7,6 +7,7 @@ pub enum ConversionErrors {
     InvalidBasePrefixError,
     EmptyInputError,
     UndefinedBaseContextError,
+    LargeInputError
 }
 
 impl fmt::Display for ConversionErrors {
@@ -17,6 +18,7 @@ impl fmt::Display for ConversionErrors {
             ConversionErrors::InvalidBasePrefixError => "invalid base prefix in provided string",
             ConversionErrors::EmptyInputError => "provided string was empty",
             ConversionErrors::UndefinedBaseContextError => "provided base for conversion is undefined",
+            ConversionErrors::LargeInputError => "provided input was too large to process"
         };
 
         write!(f, "{}", msg)
