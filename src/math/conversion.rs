@@ -66,8 +66,22 @@ pub fn base2dec(
             }
         };
 
-        counter += usize::pow(base, pos as u32) * index;
+        // checked counter math (overflows should return error)
+        let pow = match usize::checked_pow(base, pos as u32) {
+            Some(n) => n,
+            None => return Err(ConversionErrors::LargeInputError)
+        };
+        
+        let mult = match pow.checked_mul(index) {
+            Some(n) => n,
+            None => return Err(ConversionErrors::LargeInputError)
+        };
 
+        counter += match counter.checked_add(mult) {
+            Some(n) => n,
+            None => return Err(ConversionErrors::LargeInputError)
+        };
+        
         debug!("pos {}: {} | counter: {}", pos, c, counter);
         
         pos += 1;
